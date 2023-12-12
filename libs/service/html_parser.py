@@ -21,35 +21,42 @@ class Scraper:
         return self.__base_url+pieces_url
 
 
-    def extract_url(self, url_page: str):
+    def extract_url(self, url_page: str) -> list(str):
+        urls = []
         response = requests.get(url= url_page)
         html = PyQuery(response.text)
 
         body = html.find(selector='#search > div.s-desktop-width-max.s-desktop-content.s-wide-grid-style-t1.s-opposite-dir.s-wide-grid-style.sg-row > div.sg-col-20-of-24.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span.rush-component.s-latency-cf-section > div.s-main-slot.s-result-list.s-search-results.sg-row > div')
         
         for ind, link in enumerate(body):
-            if ind < 3: continue
+            if ind < 3 or PyQuery(link)('h2 a').attr('href') == None : continue
 
             self.__results.append({
                 "product": PyQuery(link)('h2 a').text(),
                 "url": self.filter_url(PyQuery(link)('h2 a').attr('href'))
             })
 
+            urls.append(self.filter_url(PyQuery(link)('h2 a').attr('href')))
+
+        return urls
+
+        
+
 
     def extract_data(self, url: str):
-
-        response = requests.get(url=url, headers=self.__headers)
+        
+        response = requests.get(url=url)
         ic(response)
         html = PyQuery(response.text)
-        body = html.find(selector='#search > div.s-desktop-width-max.s-desktop-content.s-wide-grid-style-t1.s-opposite-dir.s-wide-grid-style.sg-row > div.sg-col-20-of-24.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span.rush-component.s-latency-cf-section > div.s-main-slot.s-result-list.s-search-results.sg-row > div')
-        ic(len(body))
-        for ind, link in enumerate(body):
-            if ind < 3: continue
-            ic(PyQuery(link)('h2 a').text())
-            ic(self.filter_url(PyQuery(link)('h2 a').attr('href')))
-            sleep(5)
+        body = html.find(selector='dp-container')
+
+        ic(self.__parser.ex(html=body, selector='#bylineInfo'))
+
             # self.__writer.exstr(path='private/data.html', content=link.text)
 
 
+    def ex(self, url_page: str):
+        urls = self.extract_url(url_page=url_page)
 
-        pass
+        for url in urls:
+            self.extract_data(url=url)
