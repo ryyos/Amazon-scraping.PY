@@ -1,5 +1,7 @@
 import requests
+from time import sleep
 from pyquery import PyQuery
+from icecream import ic
 from libs.utils.parser import HtmlParser
 from libs.utils.writer import Writer
 
@@ -17,8 +19,9 @@ class Scraper:
     def extract_url(self, url_page: str):
         response = requests.get(url= url_page)
         html = PyQuery(response.text)
+
         self.__results.append({
-            ""
+            # "product": 
         })
 
 
@@ -27,10 +30,15 @@ class Scraper:
     def extract_data(self, url: str):
 
         response = requests.get(url=url, headers=self.__headers)
-        print(response)
+        ic(response)
         html = PyQuery(response.text)
-        body = html.find(selector='#search div:first-child')
-        self.__writer.exstr(path='private/index.html', content=str(body))
+        body = html.find(selector='#search > div.s-desktop-width-max.s-desktop-content.s-wide-grid-style-t1.s-opposite-dir.s-wide-grid-style.sg-row > div.sg-col-20-of-24.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span.rush-component.s-latency-cf-section > div.s-main-slot.s-result-list.s-search-results.sg-row > div')
+        ic(len(body))
+        for link in body:
+            ic(PyQuery(link)('h2').text())
+            sleep(5)
+            # self.__writer.exstr(path='private/data.html', content=link.text)
+
 
 
         pass
