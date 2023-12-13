@@ -11,6 +11,9 @@ class Scraper:
         self.__writer = Writer()
         self.__results: list(dict) = []
         self.__base_url = 'https://www.amazon.com'
+        self.__proxies = {
+            "http": "154.6.96.156:3128"
+        }
         self.__headers = {
             "session-token": "wxXMDsC6wPeUPFMuIPOBD8CHUklziBMiYYwQSGgQKmOJwhetjQAc9EQ2cArUarZ0kiY22RVXOC193Bzpn6KJ5PC32kkl1Za7FS7DoCU4N1LqsBgufxdO2WJPLSlfPPIHXrYIaR15FEw6HYBmwXPYgnlLxrexXvJrQ9T4VOrx5aH4ItTaqhzCMp9dHkGOkdQ5uHWNLeGR+NZYyx68zm25E+ihdukW1ZDa05LM/anfRfnktrEuMrrWQ7QrbBxG1lD0mJHwG4YanaonfSzliPD1BPd86v/+iOCwNH4QZ3uwJdvId/+m8RToASD1AnXlxLogUpO52VWVtZAMubcb4flR9vwcHL4jYF2Y",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
@@ -40,22 +43,44 @@ class Scraper:
 
         return urls
 
-        
+    def retry(self, url, max_retries= 3, retry_interval= 0.2) -> PyQuery:
+         
+        for _ in range(max_retries):
+            try:
+                response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+                ic(response)
+                html = PyQuery(response.text)
+                body = html.find(selector='#dp-container')
+                
+                ic(len(body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")))
+                if body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span").length:
+                     return body
+                
+            except requests.RequestException as err:
+                 ic(err)
+
+            sleep(retry_interval)
+
+        return None
+
+
+
 
 
     def extract_data(self, url: str):
         
-        response = requests.get(url=url, headers=self.__headers)
+        response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
         ic(response)
         html = PyQuery(response.text)
         body = html.find(selector='#dp-container')
+        
 
         details ={
             "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
             "bought ": self.__parser.ex(html=body, selector='#social-proofing-faceout-title-tk_bought > span').text(),
             "store": self.__parser.ex(html=body, selector='#bylineInfo').text(),
-            "ratings": int(self.__parser.ex(html=body, selector='#acrCustomerReviewText').text().split(' ')[0]),
-            "stars": float(self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0]),
+            "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text().split(' ')[0],
+            "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0],
             "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
             "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
             "specification": {
@@ -64,6 +89,24 @@ class Scraper:
         } 
 
         ic(details)
+
+        foot = self.retry(url=url)
+
+        # Left
+        ic(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
+
+        #Right
+        ic(foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
+
+        for left in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
+                ic(self.__parser.ex(html=left, selector='a').text())
+        
+
+        for left in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
+                ic(self.__parser.ex(html=left, selector='a').text())
+        # product_informations = {
+
+        # }
         # for spec in body.find(selector="#poExpander tr"):
         #     ic(self.__parser.ex(html=spec, selector='td:first-child').text())
         #     ic(self.__parser.ex(html=spec, selector='td:last-child').text())
