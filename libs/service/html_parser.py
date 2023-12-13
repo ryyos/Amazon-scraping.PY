@@ -43,10 +43,12 @@ class Scraper:
         return urls
 
 
-    def retry(self, url, max_retries= 3, retry_interval= 0.2) -> PyQuery:
+    def retry(self, url, max_retries= 5, retry_interval= 0.2) -> PyQuery:
+        
         for _ in range(max_retries):
             try:
                 response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+                ic(retry_interval)
                 sleep(retry_interval)
                 ic(response)
                 html = PyQuery(response.text)
@@ -57,6 +59,7 @@ class Scraper:
                 
             except requests.RequestException as err:
                  ic(err)
+            retry_interval+= 0.2
         return body
 
 
@@ -83,7 +86,8 @@ class Scraper:
         # ic(details)
 
         foot = self.retry(url=url)
-        table = foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
+        table_left = foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
+        table_right = foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
 
 
         # Left
@@ -100,13 +104,30 @@ class Scraper:
                 ic(self.__parser.ex(html=right, selector='a').text())
 
         
-        for supplement in table.find(selector="tr"):
+        for supplement in table_left.find(selector="tr"):
              ic(self.__parser.ex(html=supplement, selector="th:first-child").text()) # Keys
              if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
              ic(self.__parser.ex(html=supplement, selector="td").text()) # Value
 
-        
              
+        for supplement in table_right.find(selector="tr"):
+             ic(self.__parser.ex(html=supplement, selector="th:first-child").text()) # Keys
+             if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
+             ic(self.__parser.ex(html=supplement, selector="td").text()) # Value
+
+        # ic(self.__parser.ex(html= foot, selector="#productDetails_expanderSectionTables > div > div:nth-child(1) > div.a-row.a-spacing-base > div > div:nth-child(2) > span:nth-child(1))").text())
+        # ic(self.__parser.ex(html= foot, selector="productDetails_expanderSectionTables > div > div:nth-child(2) > div.a-row.a-spacing-base > div > div:nth-child(2) > span:nth-child(1))").text())
+
+        # Jika product detail di kiri
+        for span in self.__parser.ex(html=foot, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div"):
+             ic(self.__parser.ex(html=span, selector="span").text())
+
+        #product descriptions
+        ic(self.__parser.ex(html=foot, selector="#productDescription > p > span").text())
+
+        # Jika product detail di kanan
+        # for span in self.__parser.ex(html=foot, selector="#productDetails_expanderSectionTables > div > div:last-child > div:nth-child(2) > div"):
+        #      ic(self.__parser.ex(html=span, selector="span").text())
 
 
 
