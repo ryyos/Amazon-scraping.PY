@@ -1,0 +1,47 @@
+{
+  "captions": "",
+  "bought ": "",
+  "store": "Visit the Apple Store",
+  "ratings": "14",
+  "stars": "4.3",
+  "discount": "",
+  "price": "",
+  "about_this_item": [
+    "SUPERCHARGED BY M3 \u2014 With an 8-core CPU and 10-core GPU, the Apple M3 chip can help you blaze through everyday multitasking and take on pro projects like editing thousands of photos or 4K video.",
+    "UP TO 22 HOURS OF BATTERY LIFE \u2014 Go all day thanks to the power-efficient design of Apple silicon. The MacBook Pro laptop delivers the same exceptional performance whether it\u2019s running on battery or plugged in. (Battery life varies by use and configuration. See apple.com/batteries for more information.)",
+    "BRILLIANT PRO DISPLAY \u2014 The 14.2-inch Liquid Retina XDR display features Extreme Dynamic Range, over 1000 nits of brightness for stunning HDR content, up to 600 nits of brightness for SDR content, and pro reference modes for doing your best work on the go. (The display has rounded corners at the top. When measured diagonally, the screen is 14.2 inches. Actual viewable area is less.)",
+    "FULLY COMPATIBLE \u2014 All your pro apps run lightning fast \u2014 including Adobe Creative Cloud, Apple Xcode, Microsoft 365, Medivis SurgicalAR, and many of your favorite iPhone and iPad apps. And with macOS, work and play on your Mac are even more powerful. Elevate your presence on video calls. Access information in all-new ways. And discover even more ways to personalize your Mac. (Apps are available on the App Store.)",
+    "ADVANCED CAMERA AND AUDIO \u2014 Look sharp and sound great with a 1080p FaceTime HD camera, a studio-quality three-mic array, and a six-speaker sound system with Spatial Audio.",
+    "CONNECT IT ALL \u2014 This MacBook Pro features a MagSafe charging port, two Thunderbolt / USB 4 ports, an SDXC card slot, an HDMI port, and a headphone jack. Enjoy fast wireless connectivity with Wi-Fi 6E and Bluetooth 5.3. Supports one external display. (Wi\u2011Fi 6E available in countries and regions where supported.)",
+    "MAGIC KEYBOARD WITH TOUCH ID \u2014 The backlit Magic Keyboard has a full-height function key row and Touch ID, which gives you a fast, easy, secure way to unlock your laptop and sign in to apps and sites."
+  ],
+  "specification": {
+    "Brand": "Apple",
+    "Model Name": "MacBook Pro",
+    "Screen Size": "14.2 Inches",
+    "Color": "Space Gray",
+    "Hard Disk Size": "512 GB",
+    "Ram Memory Installed Size": "8 GB",
+    "Operating System": "Mac OS",
+    "Graphics Card Description": "Integrated",
+    "Graphics Coprocessor": "Apple Integrated Graphics",
+    "CPU Speed": "1"
+  },
+  "warranty_and_Support": [],
+  "product_information": [
+    {
+      "Display": "Display",
+      "Processor": "Processor",
+      "Graphics and Video Support": "Graphics and Video Support",
+      "Charging and Expansion": "Charging and Expansion",
+      "Wireless": "Wireless",
+      "In the Box": "In the Box",
+      "Height": "0.6 inch (1.55 cm)",
+      "Width": "12.31 inches (31.26 cm)",
+      "Depth": "8.71 inches (22.12 cm)",
+      "Weight": "3.4 pounds (1.55kg)",
+      "Release Date": "10/31/2023"
+    }
+  ],
+  "product_descriptions": ""
+}

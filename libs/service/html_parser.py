@@ -74,16 +74,15 @@ class Scraper:
 
 
     def extract_data(self, url: str):
-        
-        response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
-        ic(response)
-        html = PyQuery(response.text)
+        #btfContent31_feature_div > div > div:nth-child(3) > div > div:nth-child(1) > div > table
         body = self.retry(url=url)
 
         table_left = body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
         table_right = body.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
-
+        mac_table_left = body.find(selector="#btfContent31_feature_div > div > div:nth-child(3) > div:first-child > div:first-child > div:nth-child(1) > table > tr") 
+        mac_table_right = body.find(selector="#btfContent31_feature_div > div > div:nth-child(3) > div:first-child > div:last-child > div:nth-child(1) > table > tr") 
         
+
         key_left = [self.__parser.ex(html=left, selector='a').text() for left in body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")]
         key_right = [self.__parser.ex(html=right, selector='a').text() for right in body.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span")]
 
@@ -107,6 +106,19 @@ class Scraper:
 
             product_information.append(product_information_right)
 
+        if not product_information:
+            product = {}
+            product.update({
+                self.__parser.ex(html=supplement, selector="td:first-child").text(): self.__parser.ex(html=supplement, selector="td:first-child").text() for supplement in mac_table_left
+            })
+
+            product.update({
+                self.__parser.ex(html=supplement, selector="td:first-child").text(): self.__parser.ex(html=supplement, selector="td:last-child").text() for supplement in mac_table_right
+            })
+
+            product_information.append(product)
+
+
         try:
             if self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div"):
                 Warranty_and_Support =[ self.__filter_str(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div")]
@@ -125,6 +137,7 @@ class Scraper:
             "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0],
             "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
             "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
+            "about_this_item": [self.__parser.ex(html=about, selector="span").text() for about in body.find(selector="#feature-bullets > ul > li")],
             "specification": {
                self.__filter_str(text=self.__parser.ex(html=spec, selector='td:first-child').text()):  self.__filter_str(text=self.__parser.ex(html=spec, selector='td:last-child').text()) for spec in body.find(selector="#poExpander tr")
             },
@@ -135,6 +148,9 @@ class Scraper:
 
 
         ic(details)
+
+        # self.__writer.ex(path=f"private/percobaan19.json", content=details)
+
         return details
 
 
@@ -143,8 +159,9 @@ class Scraper:
     def ex(self, url_page: str):
         urls = self.extract_url(url_page=url_page)
 
-        ic(len(urls))
+        # ic(len(urls))
 
+        # self.extract_data(url="https://www.amazon.com/Apple-MacBook-Laptop-8%E2%80%91core-10%E2%80%91core/dp/B0CM5JV268/ref=sr_1_7?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702481232&refinements=p_36%3A2421891011&s=electronics&sr=1-7&th=1")
         for ind, url in enumerate(urls):
             ic(url)
             self.__results[ind].update({
