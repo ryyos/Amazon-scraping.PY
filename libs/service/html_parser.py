@@ -69,7 +69,6 @@ class Scraper:
         ic(response)
         html = PyQuery(response.text)
         body = html.find(selector='#dp-container')
-        
 
         # details ={
         #     "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
@@ -84,46 +83,76 @@ class Scraper:
         #     } 
         # } 
         # ic(details)
-
         foot = self.retry(url=url)
         table_left = foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
         table_right = foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
 
 
+
+        # for left in foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
+
+        #     dropdown = {
+
+        #     }
+
+        # product_information_right = {
+        #      self.__parser.ex(html=right, selector='a').text(): {
+        #           self.__parser.ex(html=supplement, selector="tr th:first-child").text(): self.__parser.ex(html=supplement, selector="tr td").text() for supplement in table_right
+        #      } for right in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span")
+        # }
+
+        # ic(product_information_left)
+        # ic(product_information_right)
+
+        # self.__writer.ex(path="private/percobaan1.json", content=product_information_left)
+
         # Left
-        ic(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
-
-        #Right
-        ic(foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
-
-        for left in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
-                ic(self.__parser.ex(html=left, selector='a').text())
+        # ic(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
         
+        # ic(len(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")))
+        # ic(len(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")))
+        # ic(len(table_left.find(selector="tr")))
 
-        for right in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
-                ic(self.__parser.ex(html=right, selector='a').text())
+        # #Right
+        # ic(foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
 
         
-        for supplement in table_left.find(selector="tr"):
-             ic(self.__parser.ex(html=supplement, selector="th:first-child").text()) # Keys
-             if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
-             ic(self.__parser.ex(html=supplement, selector="td").text()) # Value
+        key_left = [self.__parser.ex(html=left, selector='a').text() for left in foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")]
+        key_right = [self.__parser.ex(html=right, selector='a').text() for right in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span")]
 
-             
-        for supplement in table_right.find(selector="tr"):
-             ic(self.__parser.ex(html=supplement, selector="th:first-child").text()) # Keys
-             if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
-             ic(self.__parser.ex(html=supplement, selector="td").text()) # Value
+
+        results = []
+        for ind, supplement in enumerate(table_left):
+            product_information_left = {
+                key_left[ind]: {
+                    key.text: self.__parser.ex(html=supplement, selector="td")[value].text for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child")) if self.__parser.ex(html=supplement, selector="tr th:first-child") != "Customer Reviews"
+                } 
+            }
+
+            results.append(product_information_left)
+
+        for ind, supplement in enumerate(table_right):
+            product_information_right = {
+                key_right[ind]: {
+                    key.text: self.__parser.ex(html=supplement, selector="td")[value].text for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child"))
+                }
+            }
+
+            results.append(product_information_right)
+
+
+        self.__writer.ex(path="private/percobaan7.json", content=results)
+
 
         # ic(self.__parser.ex(html= foot, selector="#productDetails_expanderSectionTables > div > div:nth-child(1) > div.a-row.a-spacing-base > div > div:nth-child(2) > span:nth-child(1))").text())
         # ic(self.__parser.ex(html= foot, selector="productDetails_expanderSectionTables > div > div:nth-child(2) > div.a-row.a-spacing-base > div > div:nth-child(2) > span:nth-child(1))").text())
 
         # Jika product detail di kiri
-        for span in self.__parser.ex(html=foot, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div"):
-             ic(self.__parser.ex(html=span, selector="span").text())
+        # for span in self.__parser.ex(html=foot, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div"):
+        #      ic(self.__parser.ex(html=span, selector="span").text())
 
-        #product descriptions
-        ic(self.__parser.ex(html=foot, selector="#productDescription > p > span").text())
+        # #product descriptions
+        # ic(self.__parser.ex(html=foot, selector="#productDescription > p > span").text())
 
         # Jika product detail di kanan
         # for span in self.__parser.ex(html=foot, selector="#productDetails_expanderSectionTables > div > div:last-child > div:nth-child(2) > div"):

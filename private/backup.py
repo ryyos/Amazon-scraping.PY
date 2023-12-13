@@ -69,7 +69,6 @@ class Scraper:
         ic(response)
         html = PyQuery(response.text)
         body = html.find(selector='#dp-container')
-        
 
         # details ={
         #     "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
@@ -85,18 +84,25 @@ class Scraper:
         # } 
         # ic(details)
 
+        product_information = {
+             
+        }
+
         foot = self.retry(url=url)
         table_left = foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
         table_right = foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
 
 
         # Left
-        ic(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
+        # ic(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
+        
+        ic(len(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")))
+        ic(len(table_left.find(selector="tr")))
 
         #Right
         ic(foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
 
-        for left in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
+        for left in foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
                 ic(self.__parser.ex(html=left, selector='a').text())
         
 
@@ -109,7 +115,6 @@ class Scraper:
              if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
              ic(self.__parser.ex(html=supplement, selector="td").text()) # Value
 
-             
         for supplement in table_right.find(selector="tr"):
              ic(self.__parser.ex(html=supplement, selector="th:first-child").text()) # Keys
              if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
