@@ -16,7 +16,9 @@ class Scraper:
             "http": "154.6.96.156:3128"
         }
         self.__headers = {
-            "session-token": "0012BuKxT3GizFYBS0WTY4vpIdMVePf8Z1wgM6OY++YluvBh6Kz+94kq+NAZ62GIfL5wlpslbpH5gh5yb47i4fvDK7kSusksRd9SgUBC0H0e3KtiyBOaSU2GTSp8kk+8pS/Gq+YBNn2smr0Cpz0t6NiqrSt5sJiFbIwjrnUAffqvz1Gr7jArqt7QC8CCqgdvjbkXVCy0CX6ERceLAR6HhKlQhD/hzPjRYZQCAWFHRt3eEDPcSuEVFbP5UqYCq4OgRp3jCQItWab22/esSNsfvnLweEllKNg5d0QVKHOQvxpfNvZqWuMgA10aUfK8KmEyez3fSxm+fB/9NrdYuRuGakW3KeLVsHCe",
+            "session-id": "145-8749830-8342303",
+            "session-id-time": "2082787201l",
+            "session-token": "tDp8iUgutiDRQF5gSYBP1OAhhtqtaJ0TtCuTwPW6EQZEdcF8Kmew6wevVDae11dbiFXas4sJVg2wwSptiW7O7Yz3llGsm3H1NjCgVtFQYKi7K3B4gLzsmvoYcaAMs3O7V/89bOoJN/mDq9WP9EEJ4RV8fzIoQTVHphbAzRKW3xULk7cWg5qja9S1n+w81oVpTA64MjxbjJZgG1JKzPFu5cOJKAmWT7fgp6ZqAg9vSgq4JSJlqZPztvS+OiHNyGP+WAjdSjrI/yF1UiD5buFvD2dzeD5AUFGBsDLNbJAUGRr/AURgINOs5ef7xcWuwoqPCQ/T0Jmy9JHok4ujsGuC48zfK1joDfF/",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
         }
 
@@ -26,12 +28,15 @@ class Scraper:
 
 
     def __filter_str(self, text: str) -> str:
-        return text.replace('\"', "'")
+        ic(text)
+        return text.replace('\"', "'").replace("\u2019", "'").replace('\n', '').replace("\u2011", '').replace("\u2011", '').split(";")[-1]
+
 
 
     def extract_url(self, url_page: str) -> list:
         urls = []
         response = requests.get(url= url_page, headers=self.__headers)
+        ic(response)
         html = PyQuery(response.text)
 
         body = html.find(selector='#search > div.s-desktop-width-max.s-desktop-content.s-wide-grid-style-t1.s-opposite-dir.s-wide-grid-style.sg-row > div.sg-col-20-of-24.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span.rush-component.s-latency-cf-section > div.s-main-slot.s-result-list.s-search-results.sg-row > div')
@@ -48,7 +53,7 @@ class Scraper:
         return urls
 
 
-    def retry(self, url, max_retries= 5, retry_interval= 0.2) -> PyQuery:
+    def retry(self, url, max_retries= 2, retry_interval= 0.2) -> PyQuery:
         
         for _ in range(max_retries):
             try:
@@ -121,23 +126,28 @@ class Scraper:
             "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
             "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
             "specification": {
-               self.__parser.ex(html=spec, selector='td:first-child').text():  self.__parser.ex(html=spec, selector='td:last-child').text() for spec in body.find(selector="#poExpander tr")
+               self.__filter_str(text=self.__parser.ex(html=spec, selector='td:first-child').text()):  self.__filter_str(text=self.__parser.ex(html=spec, selector='td:last-child').text()) for spec in body.find(selector="#poExpander tr")
             },
             "warranty_and_Support": Warranty_and_Support,
             "product_information": product_information,
-            "product_descriptions": self.__parser.ex(html=body, selector="#productDescription > p > span").text()
+            "product_descriptions": self.__filter_str(self.__parser.ex(html=body, selector="#productDescription > p > span").text())
         } 
 
 
-        self.__writer.ex(path="private/percobaan13.json", content=details)
         ic(details)
+        return details
 
 
 
 
     def ex(self, url_page: str):
-        # urls = self.extract_url(url_page=url_page)
+        urls = self.extract_url(url_page=url_page)
 
-        self.extract_data(url="https://www.amazon.com/ASUS-ROG-Strix-Gaming-Laptop/dp/B0BV8H8HVD/ref=sr_1_4?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702378541&refinements=p_36%3A2421891011&s=electronics&sr=1-4&th=1")
-        # for url in urls:
-            # break
+        ic(len(urls))
+
+        for ind, url in enumerate(urls):
+            ic(url)
+            self.__results[ind].update({
+                "details": self.extract_data(url=url)
+            })
+            self.__writer.ex(path=f"data/data{ind}.json", content=self.__results)
