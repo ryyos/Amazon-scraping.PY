@@ -25,6 +25,10 @@ class Scraper:
         return self.__base_url+pieces_url
 
 
+    def __filter_str(self, text: str) -> str:
+        return text.replace('\"', "'")
+
+
     def extract_url(self, url_page: str) -> list:
         urls = []
         response = requests.get(url= url_page, headers=self.__headers)
@@ -83,7 +87,7 @@ class Scraper:
         for ind, supplement in enumerate(table_left):
             product_information_left = {
                 key_left[ind]: {
-                    key.text.strip(): self.__parser.ex(html=supplement, selector="td")[value].text.strip() for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child")) if self.__parser.ex(html=supplement, selector="tr th:first-child") != "Customer Reviews"
+                    key.text.strip():self.__filter_str(self.__parser.ex(html=supplement, selector="td")[value].text.strip()) for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child")) if self.__parser.ex(html=supplement, selector="tr th:first-child") != "Customer Reviews"
                 } 
             }
 
@@ -92,21 +96,17 @@ class Scraper:
         for ind, supplement in enumerate(table_right):
             product_information_right = {
                 key_right[ind]: {
-                    key.text.strip(): self.__parser.ex(html=supplement, selector="td")[value].text.strip() for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child"))
+                    key.text.strip(): self.__filter_str(self.__parser.ex(html=supplement, selector="td")[value].text.strip()) for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child"))
                 }
             }
 
             product_information.append(product_information_right)
 
-
-        # ic(self.__parser.ex(html= body, selector="#productDetails_expanderSectionTables > div > div:nth-child(1) > div.a-row.a-spacing-base > div > div:nth-child(2) > span:nth-child(1))").text())
-        # ic(self.__parser.ex(html= body, selector="productDetails_expanderSectionTables > div > div:nth-child(2) > div.a-row.a-spacing-base > div > div:nth-child(2) > span:nth-child(1))").text())
-
         try:
             if self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div"):
-                Warranty_and_Support =[ self.__parser.ex(html=span, selector="span").text() for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div")]
+                Warranty_and_Support =[ self.__filter_str(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div")]
             else:
-                Warranty_and_Support =[ self.__parser.ex(html=span, selector="span").text() for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:last-child > div:nth-child(2) > div")]
+                Warranty_and_Support =[ self.filter_url(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:last-child > div:nth-child(2) > div")]
 
         except:
             Warranty_and_Support = None
@@ -129,7 +129,7 @@ class Scraper:
         } 
 
 
-        self.__writer.ex(path="private/percobaan12.json", content=details)
+        self.__writer.ex(path="private/percobaan13.json", content=details)
         ic(details)
 
 
