@@ -15,7 +15,7 @@ class Scraper:
             "http": "154.6.96.156:3128"
         }
         self.__headers = {
-            "session-token": "wxXMDsC6wPeUPFMuIPOBD8CHUklziBMiYYwQSGgQKmOJwhetjQAc9EQ2cArUarZ0kiY22RVXOC193Bzpn6KJ5PC32kkl1Za7FS7DoCU4N1LqsBgufxdO2WJPLSlfPPIHXrYIaR15FEw6HYBmwXPYgnlLxrexXvJrQ9T4VOrx5aH4ItTaqhzCMp9dHkGOkdQ5uHWNLeGR+NZYyx68zm25E+ihdukW1ZDa05LM/anfRfnktrEuMrrWQ7QrbBxG1lD0mJHwG4YanaonfSzliPD1BPd86v/+iOCwNH4QZ3uwJdvId/+m8RToASD1AnXlxLogUpO52VWVtZAMubcb4flR9vwcHL4jYF2Y",
+            "session-token": "0012BuKxT3GizFYBS0WTY4vpIdMVePf8Z1wgM6OY++YluvBh6Kz+94kq+NAZ62GIfL5wlpslbpH5gh5yb47i4fvDK7kSusksRd9SgUBC0H0e3KtiyBOaSU2GTSp8kk+8pS/Gq+YBNn2smr0Cpz0t6NiqrSt5sJiFbIwjrnUAffqvz1Gr7jArqt7QC8CCqgdvjbkXVCy0CX6ERceLAR6HhKlQhD/hzPjRYZQCAWFHRt3eEDPcSuEVFbP5UqYCq4OgRp3jCQItWab22/esSNsfvnLweEllKNg5d0QVKHOQvxpfNvZqWuMgA10aUfK8KmEyez3fSxm+fB/9NrdYuRuGakW3KeLVsHCe",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
         }
 
@@ -30,7 +30,6 @@ class Scraper:
         html = PyQuery(response.text)
 
         body = html.find(selector='#search > div.s-desktop-width-max.s-desktop-content.s-wide-grid-style-t1.s-opposite-dir.s-wide-grid-style.sg-row > div.sg-col-20-of-24.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span.rush-component.s-latency-cf-section > div.s-main-slot.s-result-list.s-search-results.sg-row > div')
-        
         for ind, link in enumerate(body):
             if ind < 3 or PyQuery(link)('h2 a').attr('href') == None : continue
 
@@ -43,28 +42,22 @@ class Scraper:
 
         return urls
 
+
     def retry(self, url, max_retries= 3, retry_interval= 0.2) -> PyQuery:
-         
         for _ in range(max_retries):
             try:
                 response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+                sleep(retry_interval)
                 ic(response)
                 html = PyQuery(response.text)
                 body = html.find(selector='#dp-container')
                 
-                ic(len(body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")))
                 if body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span").length:
                      return body
                 
             except requests.RequestException as err:
                  ic(err)
-
-            sleep(retry_interval)
-
-        return None
-
-
-
+        return body
 
 
     def extract_data(self, url: str):
@@ -75,22 +68,23 @@ class Scraper:
         body = html.find(selector='#dp-container')
         
 
-        details ={
-            "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
-            "bought ": self.__parser.ex(html=body, selector='#social-proofing-faceout-title-tk_bought > span').text(),
-            "store": self.__parser.ex(html=body, selector='#bylineInfo').text(),
-            "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text().split(' ')[0],
-            "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0],
-            "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
-            "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
-            "specification": {
-               self.__parser.ex(html=spec, selector='td:first-child').text():  self.__parser.ex(html=spec, selector='td:last-child').text() for spec in body.find(selector="#poExpander tr")
-            } 
-        } 
-
-        ic(details)
+        # details ={
+        #     "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
+        #     "bought ": self.__parser.ex(html=body, selector='#social-proofing-faceout-title-tk_bought > span').text(),
+        #     "store": self.__parser.ex(html=body, selector='#bylineInfo').text(),
+        #     "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text().split(' ')[0],
+        #     "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0],
+        #     "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
+        #     "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
+        #     "specification": {
+        #        self.__parser.ex(html=spec, selector='td:first-child').text():  self.__parser.ex(html=spec, selector='td:last-child').text() for spec in body.find(selector="#poExpander tr")
+        #     } 
+        # } 
+        # ic(details)
 
         foot = self.retry(url=url)
+        table = foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
+
 
         # Left
         ic(foot.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span"))
@@ -102,17 +96,18 @@ class Scraper:
                 ic(self.__parser.ex(html=left, selector='a').text())
         
 
-        for left in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
-                ic(self.__parser.ex(html=left, selector='a').text())
-        # product_informations = {
+        for right in foot.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span"):
+                ic(self.__parser.ex(html=right, selector='a').text())
 
-        # }
-        # for spec in body.find(selector="#poExpander tr"):
-        #     ic(self.__parser.ex(html=spec, selector='td:first-child').text())
-        #     ic(self.__parser.ex(html=spec, selector='td:last-child').text())
-        # ic()
+        
+        for supplement in table.find(selector="tr"):
+             ic(self.__parser.ex(html=supplement, selector="th:first-child").text()) # Keys
+             if self.__parser.ex(html=supplement, selector="th:first-child").text() == "Customer Reviews" or self.__parser.ex(html=supplement, selector="th:first-child") == "Best Sellers Rank": continue
+             ic(self.__parser.ex(html=supplement, selector="td").text()) # Value
 
-        # self.__writer.exstr(path='private/inner.html', content=str(html))
+        
+             
+
 
 
     def ex(self, url_page: str):
