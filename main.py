@@ -38,13 +38,12 @@ class Main:
             __scraper = Scraper()
 
             url = self.create_url_page(main_url=main_url, page=str(page))
-            results = __scraper.ex(url_page=url)
+            results = __scraper.ex(url_page=url, page=page)
             if results == "clear": break
 
             self.__writer.ex(path=f"data/page{page}.json", content=results)
 
             page += 1
-            ic(url)
             if page == 5: break
 
         

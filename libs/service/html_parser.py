@@ -5,12 +5,15 @@ from pyquery import PyQuery
 from icecream import ic
 from libs.utils.parser import HtmlParser
 from libs.utils.writer import Writer
+from libs.utils.logs import Logs
 
 class Scraper:
     def __init__(self) -> None:
         self.__parser = HtmlParser()
         self.__writer = Writer()
+        self.__logs = Logs()
         self.__results: list(dict) = []
+        self.__status_code = None
         self.__base_url = 'https://www.amazon.com'
         self.__proxies = {
             "http": "154.6.96.156:3128"
@@ -18,9 +21,20 @@ class Scraper:
         self.__headers = {
             "session-id": "145-8749830-8342303",
             "session-id-time": "2082787201l",
-            "session-token": "tDp8iUgutiDRQF5gSYBP1OAhhtqtaJ0TtCuTwPW6EQZEdcF8Kmew6wevVDae11dbiFXas4sJVg2wwSptiW7O7Yz3llGsm3H1NjCgVtFQYKi7K3B4gLzsmvoYcaAMs3O7V/89bOoJN/mDq9WP9EEJ4RV8fzIoQTVHphbAzRKW3xULk7cWg5qja9S1n+w81oVpTA64MjxbjJZgG1JKzPFu5cOJKAmWT7fgp6ZqAg9vSgq4JSJlqZPztvS+OiHNyGP+WAjdSjrI/yF1UiD5buFvD2dzeD5AUFGBsDLNbJAUGRr/AURgINOs5ef7xcWuwoqPCQ/T0Jmy9JHok4ujsGuC48zfK1joDfF/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            "session-token": "nEwqgsSu84GGguiqzjRb5GUw7MU+IAUiwsII5Ig3gcTckES9o6KvsvLqQBKr5nsbcT9yP+XbFnjub4ebV/it0RRb0y3cAyF288cj0dLFVzLRRKK8zlf8yvjNZTapf61orCCmjbXWJ7VQtlwyDd9MLRTVOt3G9q0Wc8w3ypLbr8Ci8UuEVMvxmpba7lRezJm1BBg0tZh+JlfjDEW/Is7bCUpR9lhDa45CZ+XAixayBDFYDWkv9TknEi7M1GpjBmPFDFCGx/G1uVV1LnYOaZtQpztccdn4ZKPlfQfz88ueG9tTmUxqjjk7hOF9Aad/TNa4X4Itrt2dBB1mK5IOg0wegkXxKcE+nDou",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "ubid-main": "134-9887907-6272432"
         }
+
+    def retry(self, url, max_retries= 3, retry_interval= 0.2):
+        for _ in range(max_retries):
+            try:
+                response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+                if response.status_code == 200: return response
+            except requests.RequestException as err:
+                 ic(err)
+            retry_interval+= 0.2
+        return response
 
 
     def filter_url(self, pieces_url: str) -> str:
@@ -50,8 +64,12 @@ class Scraper:
 
     def extract_url(self, url_page: str) -> list:
         urls = []
-        response = requests.get(url= url_page, headers=self.__headers)
-        ic(response)
+        try:
+            response = requests.get(url= url_page, headers=self.__headers)
+            ic(response)
+        except requests.ConnectionError as err:
+            response = self.retry(url=url_page, max_retries=5)
+        
         html = PyQuery(response.text)
 
         body = html.find(selector='#search > div.s-desktop-width-max.s-desktop-content.s-wide-grid-style-t1.s-opposite-dir.s-wide-grid-style.sg-row > div.sg-col-20-of-24.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span.rush-component.s-latency-cf-section > div.s-main-slot.s-result-list.s-search-results.sg-row > div')
@@ -71,11 +89,11 @@ class Scraper:
 
         try:
             response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+            self.__status_code = response.status_code
         except requests.ConnectTimeout as err:
-            ic(err)
-            return {}
+            self.__status_code = err
+            response = self.retry(url=url)
 
-        ic(response)
         html = PyQuery(response.text)
         body = html.find(selector='#dp-container')
 
@@ -169,24 +187,21 @@ class Scraper:
         } 
 
 
-        ic(details)
-
         # self.__writer.ex(path=f"private/percobaan23.json", content=details)
 
         return details
 
 
-    def ex(self, url_page: str):
+    def ex(self, page: int,  url_page: str):
         urls = self.extract_url(url_page=url_page)
 
         if not urls: return "clear"
-        # ic(len(urls))
 
         # self.extract_data(url="https://www.amazon.com/Canon-USA-3680C002-24-70mm-F2-8/dp/B07WQ54BL8/ref=sr_1_18?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702491782&refinements=p_36%3A2421891011&s=electronics&sr=1-18")
         for ind, url in enumerate(urls):
-            ic(url)
             self.__results[ind].update({
                 "details": self.extract_data(url=url)
             })
+            self.__logs.ex(status=self.__status_code, page=page, no=ind)
         
         return self.__results
