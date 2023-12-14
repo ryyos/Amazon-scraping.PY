@@ -69,8 +69,12 @@ class Scraper:
 
     def extract_data(self, url: str):
 
-        response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
-        
+        try:
+            response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+        except requests.ConnectTimeout as err:
+            ic(err)
+            return {}
+
         ic(response)
         html = PyQuery(response.text)
         body = html.find(selector='#dp-container')
@@ -175,6 +179,7 @@ class Scraper:
     def ex(self, url_page: str):
         urls = self.extract_url(url_page=url_page)
 
+        if not urls: return "clear"
         # ic(len(urls))
 
         # self.extract_data(url="https://www.amazon.com/Canon-USA-3680C002-24-70mm-F2-8/dp/B07WQ54BL8/ref=sr_1_18?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702491782&refinements=p_36%3A2421891011&s=electronics&sr=1-18")
@@ -183,4 +188,5 @@ class Scraper:
             self.__results[ind].update({
                 "details": self.extract_data(url=url)
             })
-            self.__writer.ex(path=f"data/data{ind}.json", content=self.__results)
+        
+        return self.__results
