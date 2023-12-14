@@ -21,12 +21,11 @@ class Scraper:
         self.__headers = {
             "session-id": "145-8749830-8342303",
             "session-id-time": "2082787201l",
-            "session-token": "nEwqgsSu84GGguiqzjRb5GUw7MU+IAUiwsII5Ig3gcTckES9o6KvsvLqQBKr5nsbcT9yP+XbFnjub4ebV/it0RRb0y3cAyF288cj0dLFVzLRRKK8zlf8yvjNZTapf61orCCmjbXWJ7VQtlwyDd9MLRTVOt3G9q0Wc8w3ypLbr8Ci8UuEVMvxmpba7lRezJm1BBg0tZh+JlfjDEW/Is7bCUpR9lhDa45CZ+XAixayBDFYDWkv9TknEi7M1GpjBmPFDFCGx/G1uVV1LnYOaZtQpztccdn4ZKPlfQfz88ueG9tTmUxqjjk7hOF9Aad/TNa4X4Itrt2dBB1mK5IOg0wegkXxKcE+nDou",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-            "ubid-main": "134-9887907-6272432"
+            "session-token": "mfmMRa1ybjsrNTLOszvuJ2WptU3jvimRQdF6BwgelKa8QOivSUkh/efayFPrbVT+hdVv4eakclN6S42zeNKmFcE+2KXypTA/H0JMNQ/TJtwAojie34SJTBcBqLIeS7Y+b4zqU5efcHFHWTY0Lrw4GO+z0fNPQsegzHNdJPPM7sZwiJyi9u8dhIaZMelC2cUj6YQd/gozXTpT2fKSu1KSk7ORONo7xfQiCGEqYuJzcD2TXXMeNhaYDVf+jTdfIkjTPqVLrN09IEt2+XaBC+eVaszRwXFKx/3uXJ6/14L+W6mhmMfEGjZkwAp3++1QInb4pejfTGMzWpUKXdhJLzHaK3hlB40G2glu",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
         }
 
-    def retry(self, url, max_retries= 3, retry_interval= 0.2):
+    def retry(self, url, max_retries= 5, retry_interval= 0.2):
         for _ in range(max_retries):
             try:
                 response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
@@ -48,6 +47,8 @@ class Scraper:
             .replace('\n', '')\
             .replace('\"', "'")\
             .replace("\u2011", '')\
+            .replace("\u00d7", '')\
+            .replace("\u201c", '')\
             .replace("\u202f", '')\
             .replace("\u03b1", '')\
             .replace("\u00b0", '')\
@@ -88,7 +89,7 @@ class Scraper:
     def extract_data(self, url: str):
 
         try:
-            response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+            response = self.retry(url=url)
             self.__status_code = response.status_code
         except requests.ConnectTimeout as err:
             self.__status_code = err
@@ -199,6 +200,7 @@ class Scraper:
 
         # self.extract_data(url="https://www.amazon.com/Canon-USA-3680C002-24-70mm-F2-8/dp/B07WQ54BL8/ref=sr_1_18?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702491782&refinements=p_36%3A2421891011&s=electronics&sr=1-18")
         for ind, url in enumerate(urls):
+            self.__results[ind].update({"no": ind+1})
             self.__results[ind].update({
                 "details": self.extract_data(url=url)
             })
