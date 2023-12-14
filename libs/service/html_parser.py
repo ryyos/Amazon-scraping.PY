@@ -28,8 +28,20 @@ class Scraper:
 
 
     def __filter_str(self, text: str) -> str:
-        ic(text)
-        return text.replace('\"', "'").replace("\u2019", "'").replace('\n', '').replace("\u2011", '').replace("\u2011", '').split(";")[-1]
+        return text.replace('\"', "'")\
+            .replace("\u2019", "'")\
+            .replace("\uff1a", "")\
+            .replace('\n', '')\
+            .replace('\"', "'")\
+            .replace("\u2011", '')\
+            .replace("\u202f", '')\
+            .replace("\u00b0", '')\
+            .replace("\u2122", '')\
+            .replace("\u2013", '')\
+            .replace("\u201d", "")\
+            .replace("\u00a0", "")\
+            .replace("\u2014", "")\
+            .split(";")[-1]
 
 
 
@@ -44,7 +56,7 @@ class Scraper:
             if ind < 3 or PyQuery(link)('h2 a').attr('href') == None : continue
 
             self.__results.append({
-                "product": PyQuery(link)('h2 a').text(),
+                "product": self.__filter_str(PyQuery(link)('h2 a').text()),
                 "url": self.filter_url(PyQuery(link)('h2 a').attr('href'))
             })
 
@@ -52,46 +64,39 @@ class Scraper:
 
         return urls
 
-
-    def retry(self, url, max_retries= 2, retry_interval= 0.2) -> PyQuery:
-        
-        for _ in range(max_retries):
-            try:
-                response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
-                ic(retry_interval)
-                sleep(retry_interval)
-                ic(response)
-                html = PyQuery(response.text)
-                body = html.find(selector='#dp-container')
-                
-                if body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span").length:
-                     return body
-                
-            except requests.RequestException as err:
-                 ic(err)
-            retry_interval+= 0.2
-        return body
-
-
     def extract_data(self, url: str):
-        #btfContent31_feature_div > div > div:nth-child(3) > div > div:nth-child(1) > div > table
-        body = self.retry(url=url)
+
+        response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+        
+        ic(response)
+        html = PyQuery(response.text)
+        body = html.find(selector='#dp-container')
 
         table_left = body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
         table_right = body.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > div:nth-child(2)  > div > table")
+
         mac_table_left = body.find(selector="#btfContent31_feature_div > div > div:nth-child(3) > div:first-child > div:first-child > div:nth-child(1) > table > tr") 
         mac_table_right = body.find(selector="#btfContent31_feature_div > div > div:nth-child(3) > div:first-child > div:last-child > div:nth-child(1) > table > tr") 
-        
+
+        can_table = body.find(selector="#productDetails_detailBullets_sections1 tr")
+        graphic_table = body.find(selector="#productDetails_techSpec_section_1 tr")
 
         key_left = [self.__parser.ex(html=left, selector='a').text() for left in body.find(selector="#productDetails_expanderTables_depthLeftSections > [data-csa-c-content-id='voyager-expander-btn'] > span")]
         key_right = [self.__parser.ex(html=right, selector='a').text() for right in body.find(selector="#productDetails_expanderTables_depthRightSections > [data-csa-c-content-id='voyager-expander-btn'] > span")]
 
+        spesifications = body.find(selector="#poExpander tr")
+        Warranty_and_Support = [ self.__filter_str(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div")]
 
         product_information: list(dict) = []
+
+        if not spesifications:
+            spesifications = body.find(selector="#productOverview_feature_div > div > table > tr")
+        
+
         for ind, supplement in enumerate(table_left):
             product_information_left = {
                 key_left[ind]: {
-                    key.text.strip():self.__filter_str(self.__parser.ex(html=supplement, selector="td")[value].text.strip()) for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child")) if self.__parser.ex(html=supplement, selector="tr th:first-child") != "Customer Reviews"
+                    key.text.strip():self.__filter_str(self.__parser.ex(html=supplement, selector="td")[value].text.strip()) for value, key in enumerate(self.__parser.ex(html=supplement, selector="tr th:first-child"))
                 } 
             }
 
@@ -111,35 +116,45 @@ class Scraper:
             product.update({
                 self.__parser.ex(html=supplement, selector="td:first-child").text(): self.__parser.ex(html=supplement, selector="td:first-child").text() for supplement in mac_table_left
             })
-
             product.update({
                 self.__parser.ex(html=supplement, selector="td:first-child").text(): self.__parser.ex(html=supplement, selector="td:last-child").text() for supplement in mac_table_right
             })
 
-            product_information.append(product)
+            if bool(product): product_information.append(product)
 
+        if not product_information:
+            product = {}
+            product.update({
+                self.__parser.ex(html=can, selector="th").text(): self.__filter_str(text=self.__parser.ex(html=can, selector="td").text()) for can in can_table
+            })
 
-        try:
-            if self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div"):
-                Warranty_and_Support =[ self.__filter_str(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:first-child > div:nth-child(2) > div")]
-            else:
-                Warranty_and_Support =[ self.filter_url(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:last-child > div:nth-child(2) > div")]
+            if bool(product): product_information.append(product)
 
-        except:
-            Warranty_and_Support = None
+        if not product_information:
+            product = {}
+            product.update({
+                self.__parser.ex(html=graphic, selector="th").text(): self.__filter_str(text=self.__parser.ex(html=graphic, selector="td").text()) for graphic in graphic_table
+            })
+
+            if bool(product): product_information.append(product)
+
+        
+
+        if not Warranty_and_Support:
+            Warranty_and_Support =[ self.filter_url(self.__parser.ex(html=span, selector="span").text()) for span in self.__parser.ex(html=body, selector="#productDetails_expanderSectionTables > div > div:last-child > div:nth-child(2) > div")]
 
 
         details = {
             "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
             "bought ": self.__parser.ex(html=body, selector='#social-proofing-faceout-title-tk_bought > span').text(),
             "store": self.__parser.ex(html=body, selector='#bylineInfo').text(),
-            "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text().split(' ')[0],
-            "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0],
+            "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text(),
+            "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text(),
             "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
             "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
-            "about_this_item": [self.__parser.ex(html=about, selector="span").text() for about in body.find(selector="#feature-bullets > ul > li")],
+            "about_this_item": [self.__filter_str(self.__parser.ex(html=about, selector="span").text()) for about in body.find(selector="#feature-bullets > ul > li")],
             "specification": {
-               self.__filter_str(text=self.__parser.ex(html=spec, selector='td:first-child').text()):  self.__filter_str(text=self.__parser.ex(html=spec, selector='td:last-child').text()) for spec in body.find(selector="#poExpander tr")
+               self.__filter_str(text=self.__parser.ex(html=spec, selector='td:first-child').text()):  self.__filter_str(text=self.__parser.ex(html=spec, selector='td:last-child').text()) for spec in spesifications
             },
             "warranty_and_Support": Warranty_and_Support,
             "product_information": product_information,
@@ -149,11 +164,9 @@ class Scraper:
 
         ic(details)
 
-        # self.__writer.ex(path=f"private/percobaan19.json", content=details)
+        # self.__writer.ex(path=f"private/percobaan23.json", content=details)
 
         return details
-
-
 
 
     def ex(self, url_page: str):
@@ -161,7 +174,7 @@ class Scraper:
 
         # ic(len(urls))
 
-        # self.extract_data(url="https://www.amazon.com/Apple-MacBook-Laptop-8%E2%80%91core-10%E2%80%91core/dp/B0CM5JV268/ref=sr_1_7?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702481232&refinements=p_36%3A2421891011&s=electronics&sr=1-7&th=1")
+        # self.extract_data(url="https://www.amazon.com/Canon-USA-3680C002-24-70mm-F2-8/dp/B07WQ54BL8/ref=sr_1_18?content-id=amzn1.sym.be90cfaf-ddce-4e28-b561-f2a8c0017fef&pd_rd_r=c7b043d7-6715-4eba-8a07-1324ff7b4ddb&pd_rd_w=KK1K8&pd_rd_wg=NZV11&pf_rd_p=be90cfaf-ddce-4e28-b561-f2a8c0017fef&pf_rd_r=E69ZY9ADBEPD57BXZDKD&qid=1702491782&refinements=p_36%3A2421891011&s=electronics&sr=1-18")
         for ind, url in enumerate(urls):
             ic(url)
             self.__results[ind].update({
