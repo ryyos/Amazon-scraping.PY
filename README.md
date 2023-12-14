@@ -85,8 +85,8 @@ python main.py
 │   │
 │   └───__pycache__
 │
-├───logs
-│       logging.log
+└───logs
+       logging.log
 ```
 
 ## Author
