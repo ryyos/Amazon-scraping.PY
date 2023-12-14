@@ -35,9 +35,12 @@ class Scraper:
             .replace('\"', "'")\
             .replace("\u2011", '')\
             .replace("\u202f", '')\
+            .replace("\u03b1", '')\
             .replace("\u00b0", '')\
             .replace("\u2122", '')\
+            .replace("\uff01", '')\
             .replace("\u2013", '')\
+            .replace("\u00ae", '')\
             .replace("\u201d", "")\
             .replace("\u00a0", "")\
             .replace("\u2014", "")\
@@ -148,8 +151,8 @@ class Scraper:
             "captions": self.__parser.ex(html=body, selector='#acBadge_feature_div > div > span.ac-for-text > span').text(),
             "bought ": self.__parser.ex(html=body, selector='#social-proofing-faceout-title-tk_bought > span').text(),
             "store": self.__parser.ex(html=body, selector='#bylineInfo').text(),
-            "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text(),
-            "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text(),
+            "ratings": self.__parser.ex(html=body, selector='#acrCustomerReviewText').text().split(' ')[0],
+            "stars": self.__parser.ex(html=body, selector='#acrPopover > span.a-declarative > a > span:first-child').text().split(' ')[0],
             "discount": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(2)').text(),
             "price": self.__parser.ex(html=body, selector='#corePriceDisplay_desktop_feature_div > div:nth-child(2) > span:nth-child(3) > span:nth-child(2)').text(),
             "about_this_item": [self.__filter_str(self.__parser.ex(html=about, selector="span").text()) for about in body.find(selector="#feature-bullets > ul > li")],
