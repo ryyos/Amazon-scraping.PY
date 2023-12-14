@@ -1,6 +1,7 @@
 from libs import Scraper
 from libs import Writer
 from icecream import ic
+from datetime import datetime as time
 
 
 class Main:
@@ -33,15 +34,30 @@ class Main:
     def main(self, url: str):
         main_url = self.connect_main_url(url=url)
 
+        all_data = {
+            "kategories": "Electronic",
+            "times": time.now,
+            "datas": []
+        }
         page = 1
         while True:
             __scraper = Scraper()
-
             url = self.create_url_page(main_url=main_url, page=str(page))
+
             results = __scraper.ex(url_page=url, page=page)
             if results == "clear": break
 
-            self.__writer.ex(path=f"data/page{page}.json", content=results)
+            all_data["datas"].append(results)
+            all_data["total_page"] = page
+
+            page_results = {
+                "kategories": "Electronic",
+                "times": time.now,
+                "page": page,
+                "datas": results
+            }
+
+            self.__writer.ex(path=f"data/page{page}.json", content=page_results)
 
             page += 1
             if page == 5: break
