@@ -4,6 +4,7 @@ from time import sleep
 from pyquery import PyQuery
 from libs import Scraper
 from libs import Writer
+from fake_useragent import UserAgent
 from libs import HtmlParser
 from icecream import ic
 from datetime import datetime as time
@@ -16,16 +17,15 @@ class Main:
         self.__all_urls = []
         self.__all_categories: str = []
         self.__writer = Writer()
+        self.__user_agent = UserAgent()
         self.__parser = HtmlParser()
         self.__base_url = 'https://www.amazon.com'
         self.__proxies = {
             "http": "154.6.96.156:3128"
         }
         self.__headers = {
-            "session-id": "145-8749830-8342303",
-            "session-id-time": "2082787201l",
-            "session-token": "mfmMRa1ybjsrNTLOszvuJ2WptU3jvimRQdF6BwgelKa8QOivSUkh/efayFPrbVT+hdVv4eakclN6S42zeNKmFcE+2KXypTA/H0JMNQ/TJtwAojie34SJTBcBqLIeS7Y+b4zqU5efcHFHWTY0Lrw4GO+z0fNPQsegzHNdJPPM7sZwiJyi9u8dhIaZMelC2cUj6YQd/gozXTpT2fKSu1KSk7ORONo7xfQiCGEqYuJzcD2TXXMeNhaYDVf+jTdfIkjTPqVLrN09IEt2+XaBC+eVaszRwXFKx/3uXJ6/14L+W6mhmMfEGjZkwAp3++1QInb4pejfTGMzWpUKXdhJLzHaK3hlB40G2glu",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            "session-token": "8SG7IBG+BKYH9gc+2on4mz/+64QqtKjJYcV1/6enxbCesEGVJ4+9p/HDKef9q3sB3d/nhFYVWwoCXsNGf7TO/k5EeduOoGh8WjZaVHkRGYFWAZSjIu/uQ0dt/R4LrTZxb7oaROD6Avl323INUhPAiPvU8S+UDz01CrTY810WXgyDZ8lMXs+QPPFnQGlA2fWDqcO7EtiVTFyZ8rZMNggE544gdQU/5jL27xgMMYY3tssLTkiMOe59mVXZcxCaVgHUYzu5gL6Xw0XbqshSGXXloq4132Vc8wX936KEBLkoNx+wTdaqZJJNvOf8yxSlEWgnNZ7m1Y6iHxGQUHgmHtBnHsPmZTmgSail",
+            "User-Agent": self.__user_agent.random
         }
 
     def connect_main_url(self, url: str) -> str:
@@ -53,7 +53,8 @@ class Main:
     def retry(self, url, max_retries= 3, retry_interval= 0.2):
         for _ in range(max_retries):
             try:
-                response = requests.get(url=url, headers=self.__headers, proxies=self.__proxies)
+                response = requests.get(url=url, headers=self.__headers)
+                ic(response)
                 if response.status_code == 200: return response
             except requests.RequestException as err:
                  ic(err)
@@ -117,10 +118,7 @@ class Main:
             if categories not in self.__all_categories:
                 self.__all_categories.append(categories)
 
-        ic(__all_url)
         for ind, one_url in enumerate(__all_url):
-            ic(ind)
-            ic(one_url)
             self.main(url=one_url)
 
         self.__writer.ex(path=f"data/Results/results.json", content=self.__all_results)
